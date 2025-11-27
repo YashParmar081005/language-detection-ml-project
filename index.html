@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Language Detector</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<main class="container">
+<h1>Language Detector</h1>
+
+
+<label for="text-input">Enter text to detect language:</label>
+<textarea id="text-input" rows="6" placeholder="Type or paste some text..."></textarea>
+
+
+<div class="actions">
+<button id="detect-btn">Detect Language</button>
+<button id="clear-btn" class="secondary">Clear</button>
+</div>
+
+
+<div id="result" class="result" aria-live="polite"></div>
+
+
+<footer>
+<small>you can detect 22 Language using this Language Detector</small>
+<br>
+<small>Estonian &nbsp; Swedish  &nbsp;  Thai    &nbsp;   Tamil  &nbsp;   Dutch    &nbsp;  Japanese  &nbsp; Turkish  &nbsp;  Latin   &nbsp;   Urdu   &nbsp;    Indonesian   &nbsp;  Portugese  &nbsp;  French  &nbsp;   Chinese  &nbsp;  Korean  &nbsp;   Hindi  &nbsp;    Spanish  &nbsp;  Pushto   &nbsp;  Persian  &nbsp;  Romanian &nbsp;  Russian  &nbsp;  English &nbsp;   Arabic     </small>
+</footer>
+</main>
+
+
+<script>
+const btn = document.getElementById('detect-btn')
+const clear = document.getElementById('clear-btn')
+const textInput = document.getElementById('text-input')
+const result = document.getElementById('result')
+
+
+async function detect() {
+const text = textInput.value.trim()
+result.textContent = ''
+if (!text) {
+result.textContent = 'Please enter some text.'
+return
+}
+
+
+btn.disabled = true
+btn.textContent = 'Detecting...'
+try {
+const resp = await fetch('/predict', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ text })
+})
+
+
+if (!resp.ok) {
+const err = await resp.json().catch(() => ({}))
+result.textContent = err.error || 'Prediction failed.'
+} else {
+const data = await resp.json()
+const conf = (data.confidence !== null && data.confidence !== undefined) ?
+` (confidence: ${(data.confidence*100).toFixed(1)}%)` : ''
+result.innerHTML = `<strong>Prediction:</strong> ${data.prediction}${conf}`
+}
+} catch (e) {
+console.error(e)
+result.textContent = 'Network or server error. Check console.'
+} finally {
+btn.disabled = false
+btn.textContent = 'Detect Language'
+}
+}
+
+
+btn.addEventListener('click', detect)
+clear.addEventListener('click', () => { textInput.value = ''; result.textContent = '' })
+
+
+// also support Ctrl+Enter to submit
+textInput.addEventListener('keydown', (e) => {
+if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') detect()
+}
+)
+</script>
+</html>
